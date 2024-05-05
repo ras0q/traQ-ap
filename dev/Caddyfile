@@ -11,11 +11,18 @@ handle /api/* {
     reverse_proxy backend:3000
 }
 
+handle /u/* {
+    redir * /api/v3{uri}
+}
+
 handle /.well-known/* {
     respond 404
 }
 handle /.well-known/change-password {
     redir * /settings/session
+}
+handle /.well-known/webfinger {
+    redir * /api/v3/.well-known/webfinger?resource={query.resource}
 }
 
 handle {
