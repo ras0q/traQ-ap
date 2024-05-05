@@ -391,6 +391,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 		apiNoAuthUsers := apiNoAuth.Group("/u")
 		{
 			apiNoAuthUsers.GET("/:username", h.GetActivityPubUser)
+			apiNoAuthUsers.GET("/:username/icon", h.GetPublicUserIcon)
 			apiNoAuthUsers.POST("/:username/inbox", h.PostActivityPubInbox)
 			apiNoAuthUsers.GET("/:username/outbox", h.GetActivityPubOutbox)
 			apiNoAuthUsers.GET("/:username/following", h.GetActivityPubFollowing)

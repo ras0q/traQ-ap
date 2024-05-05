@@ -65,17 +65,17 @@ func (h *Handlers) GetActivityPubUser(c echo.Context) error {
 	}
 
 	username := user.GetName()
-	reqURL := fmt.Sprintf("%s://%s/u/%s", c.Scheme(), c.Request().Host, username)
+	reqURL := ap.IRI(fmt.Sprintf("%s://%s/u/%s", c.Scheme(), c.Request().Host, username))
 
-	actor := ap.PersonNew(ap.IRI(reqURL))
+	actor := ap.PersonNew(reqURL)
 	actor.Name = ap.DefaultNaturalLanguageValue(username)
 	actor.PreferredUsername = ap.DefaultNaturalLanguageValue(username)
 	actor.Summary = ap.DefaultNaturalLanguageValue("hello")
-	actor.Icon = ap.IRI(ap.IRI(reqURL + "/icon"))
-	actor.Inbox = ap.IRI(reqURL + "/inbox")
-	actor.Outbox = ap.IRI(reqURL + "/outbox")
-	actor.Following = ap.IRI(reqURL + "/following")
-	actor.Followers = ap.IRI(reqURL + "/followers")
+	actor.Icon = reqURL.AddPath("icon")
+	actor.Inbox = reqURL.AddPath("inbox")
+	actor.Outbox = reqURL.AddPath("outbox")
+	actor.Following = reqURL.AddPath("following")
+	actor.Followers = reqURL.AddPath("followers")
 
 	data, err := jsonld.WithContext(
 		jsonld.IRI(ap.ActivityBaseURI),
