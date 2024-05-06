@@ -71,7 +71,11 @@ func (h *Handlers) GetActivityPubUser(c echo.Context) error {
 	actor.Name = ap.DefaultNaturalLanguageValue(username)
 	actor.PreferredUsername = ap.DefaultNaturalLanguageValue(username)
 	actor.Summary = ap.DefaultNaturalLanguageValue("hello")
-	actor.Icon = reqURL.AddPath("icon")
+	actor.Icon = ap.Image{
+		Type:      ap.ImageType,
+		MediaType: "image/png",
+		URL:       reqURL.AddPath("icon"),
+	}
 	actor.Inbox = reqURL.AddPath("inbox")
 	actor.Outbox = reqURL.AddPath("outbox")
 	actor.Following = reqURL.AddPath("following")
