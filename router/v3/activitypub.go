@@ -73,16 +73,17 @@ func (h *Handlers) GetActivityPubUser(c echo.Context) error {
 
 	apiBaseIRI := ap.IRI(fmt.Sprintf("%s://%s/api/v3", c.Scheme(), c.Request().Host))
 	userIRI := apiBaseIRI.AddPath("ap/users").AddPath(user.GetID().String())
-	username := user.GetName()
 
 	actor := ap.PersonNew(userIRI)
-	actor.Name = ap.DefaultNaturalLanguageValue(username)
-	actor.PreferredUsername = ap.DefaultNaturalLanguageValue(username)
-	actor.Summary = ap.DefaultNaturalLanguageValue("hello")
+	actor.Name = ap.DefaultNaturalLanguageValue(user.GetDisplayName())
+	actor.PreferredUsername = ap.DefaultNaturalLanguageValue(user.GetName())
+	if user.IsProfileAvailable() {
+		actor.Summary = ap.DefaultNaturalLanguageValue(user.GetBio())
+	}
 	actor.Icon = ap.Image{
 		Type:      ap.ImageType,
 		MediaType: "image/png",
-		URL:       apiBaseIRI.AddPath("public/icon").AddPath(username),
+		URL:       apiBaseIRI.AddPath("public/icon").AddPath(user.GetName()),
 	}
 	actor.Inbox = userIRI.AddPath("inbox")
 	actor.Outbox = userIRI.AddPath("outbox")
