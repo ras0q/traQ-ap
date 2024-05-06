@@ -386,15 +386,14 @@ func (h *Handlers) Setup(e *echo.Group) {
 			apiNoAuthPublic.GET("/icon/:username", h.GetPublicUserIcon)
 		}
 
-		// ActivityPub
-		apiNoAuth.GET("/.well-known/webfinger", h.GetActivityPubWebfinger)
-		apiNoAuthUsers := apiNoAuth.Group("/u")
+		apiNoAuthActivityPub := apiNoAuth.Group("/ap")
 		{
-			apiNoAuthUsers.GET("/:userID", h.GetActivityPubUser)
-			apiNoAuthUsers.POST("/:userID/inbox", h.PostActivityPubInbox)
-			apiNoAuthUsers.GET("/:userID/outbox", h.GetActivityPubOutbox)
-			apiNoAuthUsers.GET("/:userID/following", h.GetActivityPubFollowing)
-			apiNoAuthUsers.GET("/:userID/followers", h.GetActivityPubFollowers)
+			apiNoAuthActivityPub.GET("/webfinger", h.GetActivityPubWebfinger)
+			apiNoAuthActivityPub.GET("/users/:userID", h.GetActivityPubUser)
+			apiNoAuthActivityPub.POST("/users/:userID/inbox", h.PostActivityPubInbox)
+			apiNoAuthActivityPub.GET("/users/:userID/outbox", h.GetActivityPubOutbox)
+			apiNoAuthActivityPub.GET("/users/:userID/following", h.GetActivityPubFollowing)
+			apiNoAuthActivityPub.GET("/users/:userID/followers", h.GetActivityPubFollowers)
 		}
 	}
 }

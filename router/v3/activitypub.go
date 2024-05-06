@@ -20,10 +20,11 @@ type WebfingerResponse struct {
 type WebfingerLink struct {
 	Rel  string `json:"rel"`
 	Type string `json:"type"`
-	Href string `json:"href"`
+	Href ap.IRI `json:"href"`
 }
 
-// GetActivityPubWebfinger GET /.well-known/webfinger?resource=:resource
+// GetActivityPubWebfinger GET /ap/webfinger?resource=:resource
+// NOTE: this endpoint need to be redirected from /.well-known/webfinger
 func (h *Handlers) GetActivityPubWebfinger(c echo.Context) error {
 	resource := c.QueryParam("resource")
 	if !strings.HasPrefix(resource, "acct:") {
@@ -47,15 +48,14 @@ func (h *Handlers) GetActivityPubWebfinger(c echo.Context) error {
 		return herror.BadRequest("domain does not match")
 	}
 
-	reqURL := fmt.Sprintf("%s://%s/u/%s", c.Scheme(), c.Request().Host, user.GetID())
-
+	apiBaseIRI := ap.IRI(fmt.Sprintf("%s://%s/api/v3", c.Scheme(), c.Request().Host))
 	webfinger := WebfingerResponse{
 		Subject: resource,
 		Links: []WebfingerLink{
 			{
 				Rel:  "self",
 				Type: "application/activity+json",
-				Href: reqURL,
+				Href: apiBaseIRI.AddPath("ap/users").AddPath(user.GetID().String()),
 			},
 		},
 	}
@@ -63,7 +63,7 @@ func (h *Handlers) GetActivityPubWebfinger(c echo.Context) error {
 	return c.JSON(http.StatusOK, webfinger)
 }
 
-// GetActivityPubUser GET /u/:userID
+// GetActivityPubUser GET /ap/users/:userID
 func (h *Handlers) GetActivityPubUser(c echo.Context) error {
 	userID := uuid.FromStringOrNil(c.Param("userID"))
 	user, err := h.Repo.GetUser(userID, false)
@@ -71,22 +71,23 @@ func (h *Handlers) GetActivityPubUser(c echo.Context) error {
 		return herror.InternalServerError(err)
 	}
 
-	reqURL := ap.IRI(fmt.Sprintf("%s://%s/u/%s", c.Scheme(), c.Request().Host, userID))
+	apiBaseIRI := ap.IRI(fmt.Sprintf("%s://%s/api/v3", c.Scheme(), c.Request().Host))
+	userIRI := apiBaseIRI.AddPath("ap/users").AddPath(user.GetID().String())
 	username := user.GetName()
 
-	actor := ap.PersonNew(reqURL)
+	actor := ap.PersonNew(userIRI)
 	actor.Name = ap.DefaultNaturalLanguageValue(username)
 	actor.PreferredUsername = ap.DefaultNaturalLanguageValue(username)
 	actor.Summary = ap.DefaultNaturalLanguageValue("hello")
 	actor.Icon = ap.Image{
 		Type:      ap.ImageType,
 		MediaType: "image/png",
-		URL:       ap.IRI(fmt.Sprintf("%s://%s/api/v3/public/icon/%s", c.Scheme(), c.Request().Host, username)),
+		URL:       apiBaseIRI.AddPath("public/icon").AddPath(username),
 	}
-	actor.Inbox = reqURL.AddPath("inbox")
-	actor.Outbox = reqURL.AddPath("outbox")
-	actor.Following = reqURL.AddPath("following")
-	actor.Followers = reqURL.AddPath("followers")
+	actor.Inbox = userIRI.AddPath("inbox")
+	actor.Outbox = userIRI.AddPath("outbox")
+	actor.Following = userIRI.AddPath("following")
+	actor.Followers = userIRI.AddPath("followers")
 
 	data, err := jsonld.WithContext(
 		jsonld.IRI(ap.ActivityBaseURI),
@@ -101,22 +102,22 @@ func (h *Handlers) GetActivityPubUser(c echo.Context) error {
 	return c.JSONBlob(http.StatusOK, data)
 }
 
-// PostActivityPubInbox POST /u/:userID/inbox
+// PostActivityPubInbox POST /ap/users/:userID/inbox
 func (h *Handlers) PostActivityPubInbox(c echo.Context) error {
 	return echo.NewHTTPError(http.StatusNotImplemented, "activitypub is not implemented yet")
 }
 
-// GetActivityPubOutbox GET /u/:userID/outbox
+// GetActivityPubOutbox GET /ap/users/:userID/outbox
 func (h *Handlers) GetActivityPubOutbox(c echo.Context) error {
 	return echo.NewHTTPError(http.StatusNotImplemented, "activitypub is not implemented yet")
 }
 
-// GetActivityPubFollowing GET /u/:userID/following
+// GetActivityPubFollowing GET /ap/users/:userID/following
 func (h *Handlers) GetActivityPubFollowing(c echo.Context) error {
 	return echo.NewHTTPError(http.StatusNotImplemented, "activitypub is not implemented yet")
 }
 
-// GetActivityPubFollowers GET /u/:userID/followers
+// GetActivityPubFollowers GET /ap/users/:userID/followers
 func (h *Handlers) GetActivityPubFollowers(c echo.Context) error {
 	return echo.NewHTTPError(http.StatusNotImplemented, "activitypub is not implemented yet")
 }
