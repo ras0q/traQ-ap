@@ -390,12 +390,11 @@ func (h *Handlers) Setup(e *echo.Group) {
 		apiNoAuth.GET("/.well-known/webfinger", h.GetActivityPubWebfinger)
 		apiNoAuthUsers := apiNoAuth.Group("/u")
 		{
-			apiNoAuthUsers.GET("/:username", h.GetActivityPubUser)
-			apiNoAuthUsers.GET("/:username/icon", h.GetPublicUserIcon)
-			apiNoAuthUsers.POST("/:username/inbox", h.PostActivityPubInbox)
-			apiNoAuthUsers.GET("/:username/outbox", h.GetActivityPubOutbox)
-			apiNoAuthUsers.GET("/:username/following", h.GetActivityPubFollowing)
-			apiNoAuthUsers.GET("/:username/followers", h.GetActivityPubFollowers)
+			apiNoAuthUsers.GET("/:userID", h.GetActivityPubUser)
+			apiNoAuthUsers.POST("/:userID/inbox", h.PostActivityPubInbox)
+			apiNoAuthUsers.GET("/:userID/outbox", h.GetActivityPubOutbox)
+			apiNoAuthUsers.GET("/:userID/following", h.GetActivityPubFollowing)
+			apiNoAuthUsers.GET("/:userID/followers", h.GetActivityPubFollowers)
 		}
 	}
 }

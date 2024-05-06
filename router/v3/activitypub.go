@@ -7,6 +7,7 @@ import (
 
 	ap "github.com/go-ap/activitypub"
 	"github.com/go-ap/jsonld"
+	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/traQ/router/extension/herror"
 )
@@ -22,7 +23,7 @@ type WebfingerLink struct {
 	Href string `json:"href"`
 }
 
-// GetActivityPubWebfinger GET /.well-known/webfinger
+// GetActivityPubWebfinger GET /.well-known/webfinger?resource=:resource
 func (h *Handlers) GetActivityPubWebfinger(c echo.Context) error {
 	resource := c.QueryParam("resource")
 	if !strings.HasPrefix(resource, "acct:") {
@@ -37,11 +38,16 @@ func (h *Handlers) GetActivityPubWebfinger(c echo.Context) error {
 	username := parts[0]
 	domain := parts[1]
 
+	user, err := h.Repo.GetUserByName(username, false)
+	if err != nil {
+		return herror.InternalServerError(err)
+	}
+
 	if domain != c.Request().Host {
 		return herror.BadRequest("domain does not match")
 	}
 
-	reqURL := fmt.Sprintf("%s://%s/u/%s", c.Scheme(), c.Request().Host, username)
+	reqURL := fmt.Sprintf("%s://%s/u/%s", c.Scheme(), c.Request().Host, user.GetID())
 
 	webfinger := WebfingerResponse{
 		Subject: resource,
@@ -57,15 +63,16 @@ func (h *Handlers) GetActivityPubWebfinger(c echo.Context) error {
 	return c.JSON(http.StatusOK, webfinger)
 }
 
-// GetActivityPubUser GET /u/:username
+// GetActivityPubUser GET /u/:userID
 func (h *Handlers) GetActivityPubUser(c echo.Context) error {
-	user, err := h.Repo.GetUserByName(c.Param("username"), false)
+	userID := uuid.FromStringOrNil(c.Param("userID"))
+	user, err := h.Repo.GetUser(userID, false)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
 
+	reqURL := ap.IRI(fmt.Sprintf("%s://%s/u/%s", c.Scheme(), c.Request().Host, userID))
 	username := user.GetName()
-	reqURL := ap.IRI(fmt.Sprintf("%s://%s/u/%s", c.Scheme(), c.Request().Host, username))
 
 	actor := ap.PersonNew(reqURL)
 	actor.Name = ap.DefaultNaturalLanguageValue(username)
@@ -74,7 +81,7 @@ func (h *Handlers) GetActivityPubUser(c echo.Context) error {
 	actor.Icon = ap.Image{
 		Type:      ap.ImageType,
 		MediaType: "image/png",
-		URL:       reqURL.AddPath("icon"),
+		URL:       ap.IRI(fmt.Sprintf("%s://%s/api/v3/public/icon/%s", c.Scheme(), c.Request().Host, username)),
 	}
 	actor.Inbox = reqURL.AddPath("inbox")
 	actor.Outbox = reqURL.AddPath("outbox")
@@ -94,22 +101,22 @@ func (h *Handlers) GetActivityPubUser(c echo.Context) error {
 	return c.JSONBlob(http.StatusOK, data)
 }
 
-// PostActivityPubInbox POST /u/:username/inbox
+// PostActivityPubInbox POST /u/:userID/inbox
 func (h *Handlers) PostActivityPubInbox(c echo.Context) error {
 	return echo.NewHTTPError(http.StatusNotImplemented, "activitypub is not implemented yet")
 }
 
-// GetActivityPubOutbox GET /u/:username/outbox
+// GetActivityPubOutbox GET /u/:userID/outbox
 func (h *Handlers) GetActivityPubOutbox(c echo.Context) error {
 	return echo.NewHTTPError(http.StatusNotImplemented, "activitypub is not implemented yet")
 }
 
-// GetActivityPubFollowing GET /u/:username/following
+// GetActivityPubFollowing GET /u/:userID/following
 func (h *Handlers) GetActivityPubFollowing(c echo.Context) error {
 	return echo.NewHTTPError(http.StatusNotImplemented, "activitypub is not implemented yet")
 }
 
-// GetActivityPubFollowers GET /u/:username/followers
+// GetActivityPubFollowers GET /u/:userID/followers
 func (h *Handlers) GetActivityPubFollowers(c echo.Context) error {
 	return echo.NewHTTPError(http.StatusNotImplemented, "activitypub is not implemented yet")
 }
